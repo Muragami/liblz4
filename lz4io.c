@@ -38,7 +38,7 @@
 
 struct LZ4_readIO_s {
   LZ4F_dctx* dctxPtr;
-  XIO* fp;
+  XIO* io;
   LZ4_byte* srcBuf;
   size_t srcBufNext;
   size_t srcBufSize;
@@ -47,21 +47,21 @@ struct LZ4_readIO_s {
 
 struct LZ4_writeIO_s {
   LZ4F_cctx* cctxPtr;
-  XIO* fp;
+  XIO* io;
   LZ4_byte* dstBuf;
   size_t maxWriteSize;
   size_t dstBufMaxSize;
   LZ4F_errorCode_t errCode;
 };
 
-LZ4F_errorCode_t LZ4FIO_readOpen(LZ4_readIO_t** lz4fRead, XIO* fp)
+LZ4F_errorCode_t LZ4FIO_readOpen(LZ4_readIO_t** lz4fRead, XIO* io)
 {
   char buf[LZ4F_HEADER_SIZE_MAX];
   size_t consumedSize;
   LZ4F_errorCode_t ret;
   LZ4F_frameInfo_t info;
 
-  if (fp == NULL || lz4fRead == NULL) {
+  if (io == NULL || lz4fRead == NULL) {
     return -LZ4F_ERROR_GENERIC;
   }
 
@@ -76,8 +76,8 @@ LZ4F_errorCode_t LZ4FIO_readOpen(LZ4_readIO_t** lz4fRead, XIO* fp)
     return ret;
   }
 
-  (*lz4fRead)->fp = fp;
-  consumedSize = fp->read(buf, 1, sizeof(buf), (*lz4fRead)->fp);
+  (*lz4fRead)->io = io;
+  consumedSize = io->read(buf, 1, sizeof(buf), (*lz4fRead)->io);
   if (consumedSize != sizeof(buf)) {
     free(*lz4fRead);
     return -LZ4F_ERROR_GENERIC;
@@ -137,7 +137,7 @@ size_t LZ4FIO_read(LZ4_readIO_t* lz4fRead, void* buf, size_t size)
     size_t ret;
 
     if (srcsize == 0) {
-      ret = lz4fRead->fp->read(lz4fRead->srcBuf, 1, lz4fRead->srcBufMaxSize, lz4fRead->fp);
+      ret = lz4fRead->io->read(lz4fRead->srcBuf, 1, lz4fRead->srcBufMaxSize, lz4fRead->io);
       if (ret > 0) {
         lz4fRead->srcBufSize = ret;
         srcsize = lz4fRead->srcBufSize;
@@ -178,12 +178,12 @@ LZ4F_errorCode_t LZ4FIO_readClose(LZ4_readIO_t* lz4fRead)
   return LZ4F_OK_NoError;
 }
 
-LZ4F_errorCode_t LZ4FIO_writeOpen(LZ4_writeIO_t** lz4fWrite, XIO* fp, const LZ4F_preferences_t* prefsPtr)
+LZ4F_errorCode_t LZ4FIO_writeOpen(LZ4_writeIO_t** lz4fWrite, XIO* io, const LZ4F_preferences_t* prefsPtr)
 {
   LZ4_byte buf[LZ4F_HEADER_SIZE_MAX];
   size_t ret;
 
-  if (fp == NULL || lz4fWrite == NULL)
+  if (io == NULL || lz4fWrite == NULL)
     return -LZ4F_ERROR_GENERIC;
 
   *lz4fWrite = (LZ4_writeIO_t*)malloc(sizeof(LZ4_writeIO_t));
@@ -235,14 +235,14 @@ LZ4F_errorCode_t LZ4FIO_writeOpen(LZ4_writeIO_t** lz4fWrite, XIO* fp, const LZ4F
       return ret;
   }
 
-  if (ret != fp->write(buf, 1, ret, fp)) {
+  if (ret != io->write(buf, 1, ret, io)) {
     LZ4F_freeCompressionContext((*lz4fWrite)->cctxPtr);
     free((*lz4fWrite)->dstBuf);
     free(*lz4fWrite);
     return -LZ4F_ERROR_GENERIC;
   }
 
-  (*lz4fWrite)->fp = fp;
+  (*lz4fWrite)->io = io;
   (*lz4fWrite)->errCode = LZ4F_OK_NoError;
   return LZ4F_OK_NoError;
 }
@@ -271,7 +271,7 @@ size_t LZ4FIO_write(LZ4_writeIO_t* lz4fWrite, void* buf, size_t size)
       return ret;
     }
 
-    if(ret != lz4fWrite->fp->write(lz4fWrite->dstBuf, 1, ret, lz4fWrite->fp)) {
+    if(ret != lz4fWrite->io->write(lz4fWrite->dstBuf, 1, ret, lz4fWrite->io)) {
       lz4fWrite->errCode = -LZ4F_ERROR_GENERIC;
       return -LZ4F_ERROR_GENERIC;
     }
@@ -298,7 +298,7 @@ LZ4F_errorCode_t LZ4FIO_writeClose(LZ4_writeIO_t* lz4fWrite)
       goto out;
     }
 
-    if (ret != lz4fWrite->fp->write(lz4fWrite->dstBuf, 1, ret, lz4fWrite->fp)) {
+    if (ret != lz4fWrite->io->write(lz4fWrite->dstBuf, 1, ret, lz4fWrite->io)) {
       ret = -LZ4F_ERROR_GENERIC;
     }
   }

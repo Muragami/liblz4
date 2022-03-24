@@ -53,9 +53,9 @@ typedef struct _XIO {
 /*! LZ4F_readOpen() :
  * Set read lz4file handle.
  * `lz4f` will set a lz4file handle.
- * `fp` must be the return value of the lz4 file opened by fopen.
+ * `io` must be your custom interface that accesses a valid lz4f stream.
  */
-LZ4FLIB_STATIC_API LZ4F_errorCode_t LZ4FIO_readOpen(LZ4_readIO_t** lz4fRead, XIO* fp);
+LZ4FLIB_STATIC_API LZ4F_errorCode_t LZ4FIO_readOpen(LZ4_readIO_t** lz4fRead, XIO* io);
 
 /*! LZ4F_read() :
  * Read lz4file content to buffer.
@@ -74,9 +74,9 @@ LZ4FLIB_STATIC_API LZ4F_errorCode_t LZ4FIO_readClose(LZ4_readIO_t* lz4fRead);
 /*! LZ4F_writeOpen() :
  * Set write lz4file handle.
  * `lz4f` will set a lz4file handle.
- * `fp` must be the return value of the lz4 file opened by fopen.
+ * `io` must be your custom interface that accesses a valid lz4f stream.
  */
-LZ4FLIB_STATIC_API LZ4F_errorCode_t LZ4FIO_writeOpen(LZ4_writeIO_t** lz4fWrite, XIO* fp, const LZ4F_preferences_t* prefsPtr);
+LZ4FLIB_STATIC_API LZ4F_errorCode_t LZ4FIO_writeOpen(LZ4_writeIO_t** lz4fWrite, XIO* io, const LZ4F_preferences_t* prefsPtr);
 
 /*! LZ4F_write() :
  * Write buffer to lz4file.
