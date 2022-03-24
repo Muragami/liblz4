@@ -22,7 +22,7 @@ Write your read/write to behave as cstdio does, and you are golden.
 
 #### Static linking only
 
-This version has been paired down to provide a static linked
+This version has been stripped down to provide a static linked
 library only.
 
 #### License
